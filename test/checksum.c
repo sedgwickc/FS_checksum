@@ -7,12 +7,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/sha.h>
-//#include <assert.h>
+#include <assert.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
 
-#define S_BUF 128
+/* manipulated variable */
+#define S_BUF 10240
 
 int main(int argc, char* argv[]){
 
@@ -21,14 +22,13 @@ int main(int argc, char* argv[]){
 	/* checksum code using openssl/sha.h funcs */
 	SHA_CTX c;
 	unsigned char buffer[ S_BUF + 1];
-//	memset (buffer, '\0', S_BUF + 1);
 	unsigned char md[ SHA_DIGEST_LENGTH ];
 	int fd;
 	int num_bytes = 0;
 	
 	if( argc == 2){
 		fd = open(argv[1], O_RDONLY);
-//		assert( fd != -1 );
+		assert( fd != -1 );
 	} else {
 		printf("Usage: checksum [-n num_workers] FILE\n");
 		return 0;
@@ -41,7 +41,6 @@ int main(int argc, char* argv[]){
 	 */
 	while ( (num_bytes = read( fd, buffer, S_BUF)) != 0 ){
 		SHA1_Update( &c, buffer, num_bytes );
-		//memset (buffer, '\0', S_BUF );
 	}
 
 	SHA1_Final( md, &c );

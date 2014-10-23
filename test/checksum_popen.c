@@ -2,6 +2,10 @@
  * 1684807
  *
  *
+*/
+
+/* This define explained here:
+ * http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
  */
 #define _POSIX_C_SOURCE 2
 #include <stdio.h>
@@ -21,7 +25,6 @@ int main(int argc, char* argv[]){
 
 	if( argc == 2){
 		strcat(cmdline, argv[1]);
-		printf("cmd line: %s\n", cmdline);
 	} else {
 		printf("Usage: checksum [-n num_workers] FILE\n");
 		return 0;

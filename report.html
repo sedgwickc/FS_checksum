@@ -1,0 +1,12 @@
+﻿Assignment #2: FSchecksum
+Overview
+
+Design
+
+Implementation
+
+Checksum Benchmarking
+	To checksum the files in FSchecksum, there were three options presented that had to be investigated for their performance. The first was using a cryptographic library that would supply the hash functions to generate a checksum. Another option was to use the sha1sum utility via popen to generate a checksum. Lastly, the third option was to use the example form the OSTEP using memory mapped files to generate a checksum. 
+	In implementing the first option, the OpenSSL SHA hashing library was chosen. The reason behind this is mainly because the utility that this program would be compared to is using the same hashing algorithm. This helped to shift the focus form the efficiency of the hashing algorithms used to the efficiency of using the libraries themselves versus creating a process that runs the a utility. As the graphs below show, that variable that affected the results most when manipulated was the size of the buffer used to read in the contents of a file while building the checksum. The smaller the buffer, the greater the number of iterations the while loop responsible for reading into the buffer had to complete in order to get to the end of the file. However, there was a point at which increasing the buffer size had no noticeable effect on the run time of the program as can be seen in the graph. This is expected as iterating over the loop many thousands of times will have a noticeable overhead but the difference between iterating over the loop a couple hundred of times versus many hundred of times is mush less noticeable. 
+
+Testing
