@@ -1,13 +1,12 @@
 /* Charles Sedgwick
  * 1684807
- *
- *
 */
 
 /* This define explained here:
  * http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
  */
 #define _POSIX_C_SOURCE 2
+
 #include <stdio.h>
 #include <stdlib.h>
 //#include <assert.h>

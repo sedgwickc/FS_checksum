@@ -13,7 +13,7 @@
 #include <string.h>
 
 /* manipulated variable */
-#define S_BUF 10240
+#define S_BUF 1024
 
 int main(int argc, char* argv[]){
 
@@ -21,7 +21,7 @@ int main(int argc, char* argv[]){
 
 	/* checksum code using openssl/sha.h funcs */
 	SHA_CTX c;
-	unsigned char buffer[ S_BUF + 1];
+	unsigned char buffer[ S_BUF];
 	unsigned char md[ SHA_DIGEST_LENGTH ];
 	int fd;
 	int num_bytes = 0;
@@ -50,6 +50,6 @@ int main(int argc, char* argv[]){
 		printf("%x", md[i]);
 	}
 	printf("\n");
-
+	
 	return 0;
 }
