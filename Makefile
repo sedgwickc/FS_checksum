@@ -1,10 +1,10 @@
 CC=gcc
 
-CFLAGS=-Wall -std=c99 -DMEMWATCH -DMW_STDIO -c -g
+CFLAGS=-Wall -std=c99 -DMEMWATCH -DMW_STDIO -c -g -D_POSIX_SOURCE 
 
 all: FSchecksum
 
-FSchecksum: FSchecksum.o memwatch.o
+FSchecksum: FSchecksum.o logging.o fschksum_gen.o memwatch.o
 	$(CC) $^ -o $@
 
 %.o: %.c
