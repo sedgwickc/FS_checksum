@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
 	printf("----------\n");
 	
 	char *log_mess = (char *)calloc(S_LOGMESS, sizeof(char));
-
+	int fd;
 	int num_worker;
 	int opt;
 	num_worker = 0;
