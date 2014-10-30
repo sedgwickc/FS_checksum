@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include "logging.h"
+#include "memwatch.h"
 
 const char *log_types[] = { "INFO: ",
 						"ACTION: ", 
