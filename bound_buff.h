@@ -14,8 +14,6 @@
 
 #include <unistd.h>
 #include <pthread.h>
-#include <semaphore.h>
-#include <string.h>
 #include <openssl/sha.h>
 
 typedef struct {
@@ -31,17 +29,16 @@ extern int numfill;
 extern pthread_mutex_t l_bbuff;
 extern pthread_cond_t cv_remove;
 extern pthread_cond_t cv_fill;
-extern sem_t sem_pdone;
 
 int buff_init();
 
 void buff_fill( char *new_file );
 
-void buff_get(char **item);
+void buff_get( char **item );
 
 void produce();
 
-void *consume(void *);
+void *consume( void * );
 
 void buff_pdone();
 

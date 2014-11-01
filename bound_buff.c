@@ -6,15 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include "circ_buff.h"
+#include "bound_buff.h"
 #include "memwatch.h"
 
 char **buffer;
 int fillptr;
 int useptr; 
 int numfill;
+int pdone;
 
 pthread_mutex_t l_bbuff;
 pthread_cond_t cv_remove;
@@ -35,15 +34,16 @@ int buff_init(){
 	fillptr = 0;
 	useptr = 0;
 	numfill = 0;
+	pdone = 0;
 	return 0;
 }
 
 void buff_fill(char *new_file){
+	pthread_mutex_lock( &l_bbuff );
 	strncpy(buffer[fillptr], new_file, S_FPATH);
-	fillptr = (fillptr + 1) % S_BBUFF;
-	pthread_mutex_lock(&l_bbuff);
 	numfill++;
-	pthread_mutex_unlock(&l_bbuff);
+	fillptr = (fillptr + 1) % S_BBUFF;
+	pthread_mutex_unlock( &l_bbuff );
 }
 
 void buff_get(char **path){
@@ -51,9 +51,7 @@ void buff_get(char **path){
 	assert(*path != NULL);
 	strncpy(*path, buffer[useptr], S_FPATH);
 	useptr = (useptr + 1) % S_BBUFF;
-	pthread_mutex_lock( &l_bbuff );
 	numfill--;
-	pthread_mutex_unlock( &l_bbuff );
 }
 
 void produce(char *file_name){
@@ -69,23 +67,22 @@ void produce(char *file_name){
 }
 
 /* need condition that will allow threads to break out of while loop 
- * use a semaphore?
- * http://www.csc.villanova.edu/~mdamian/threads/posixsem.html
+ * Need to be aable to handle situation where the number of consumers is greater
+ * than the number of slots in the buffer as this will cause (# consumers - #
+ * buff slots) to be stuck sleeping forever on numfill == 0
  * */
 void *consume(void *arg){
 	while( 1 ){
 		pthread_mutex_lock( &l_bbuff );
-		while ( numfill == 0 ){
-			/* sem_value may change before wait and thus consumer will never
-			 * wake up
-			 *
-			 * look at textbook for soln
-			 */
+		while ( numfill == 0 && pdone == 0 ){
 			pthread_cond_wait( &cv_fill, &l_bbuff );
 		}
-		pthread_mutex_unlock( &l_bbuff );
 		char *item = NULL;
 		buff_get(&item);
+		pthread_mutex_unlock( &l_bbuff );
+		/* thread connot end while having lock or no other thread will be able
+		 * to grab it
+		 */
 		if( strncmp( item, "DONE", S_BBUFF ) == 0){
 			free(item);
 			return NULL;
@@ -101,11 +98,10 @@ void *consume(void *arg){
 	return NULL;
 }
 
-/* bug: sem_pdone is not incremented after main thread done producing or 
- * consumers go to sleep waiting on cv_fill and never wake up b/c main thread is
- * done producing
- *
- * This only works with on producer :(
+ /* This only works with on producer :(
+  *
+  * if # consumers > # buff slots then there will be consumers sleeping waiting
+  * to get a signal from the producer that there are new elements to be consumed
  */
 void buff_pdone(){
 	pthread_mutex_lock( &l_bbuff );
@@ -113,12 +109,13 @@ void buff_pdone(){
 		pthread_cond_wait( &cv_remove, &l_bbuff );
 	}
 	pthread_mutex_unlock( &l_bbuff );
-	/* consumers can grab data already processed before producer can set buffer
-	 * entries to done
-	 */
 	for(int i = 0; i < S_BBUFF; i++){
 		produce("DONE");
 	}
+	pthread_mutex_lock( &l_bbuff );
+	pdone++;
+	pthread_cond_broadcast( &cv_fill );
+	pthread_mutex_unlock( &l_bbuff );
 }
 
 void buff_free(){
@@ -130,4 +127,6 @@ void buff_free(){
 	}
 
 	free(buffer);
+	pthread_cond_destroy( &cv_remove );
+	pthread_cond_destroy( &cv_fill );
 }

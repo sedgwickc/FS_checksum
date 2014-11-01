@@ -8,10 +8,10 @@ all: FSchecksum
 
 debug: FSchecksum_debug
 
-FSchecksum_debug: FSchecksum_db.o logging_db.o circ_buff_db.o memwatch_db.o
+FSchecksum_debug: FSchecksum_db.o logging_db.o bound_buff_db.o memwatch_db.o
 	$(CC) -pthread $^ -o $@
 
-FSchecksum: FSchecksum.o logging.o circ_buff.o memwatch.o
+FSchecksum: FSchecksum.o logging.o bound_buff.o memwatch.o
 	$(CC) -pthread $^ -o $@
 
 %.o: %.c

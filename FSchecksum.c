@@ -13,8 +13,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <pthread.h>
-#include "circ_buff.h"
+#include "bound_buff.h"
 #include "logging.h"
 #include "memwatch.h"
 
@@ -33,12 +32,6 @@ int main(int argc, char* argv[]){
 	 *  the checksum of the file 
 	 * -> once complete, it determines if the checksum is valid and marks the
 	 *  buffer slot as free for the producer to fill again
-	 */
-
-	/*
-	 * memmap the chksums file instead of using read?
-	 *-> easier to grab a line from a file descriptor
-	 * 
 	 */
 
 	char *log_mess = (char *)calloc(S_LOGMESS, sizeof(char));
@@ -63,14 +56,18 @@ int main(int argc, char* argv[]){
 				break;
 			default:
 				printf("Usage: FSchecksum -n NUM_WORKERS FILE\n");
+				free(log_mess);
+				return 1;
 				break;
 		}
 	}
-	/* bug: do not run if no -n or file name! */
 
-	/* accessing non-option command line arguments base on wikipedia C example
-	 * found here: http://en.wikipedia.org/wiki/Getopt
-	 */
+	if(optind == argc ){
+		printf("Usage: FSchecksum -n NUM_WORKERS FILE\n");
+		free(log_mess);
+		return 1;
+	}
+
 	pthread_t workers[num_worker];
 	buff_init();
 
@@ -79,7 +76,6 @@ int main(int argc, char* argv[]){
 	}
 
 	int fd, status, offset;
-	long s_page = sysconf(_SC_PAGESIZE);
 	char *data;
 	struct stat s_file;
 	File *f = malloc(sizeof(File));
