@@ -6,10 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/stat.h>
+#include <errno.h>
 #include "bound_buff.h"
+#include "logging.h"
 #include "memwatch.h"
 
 char **buffer;
+char *log_mess;
 int fillptr;
 int useptr; 
 int numfill;
@@ -31,6 +35,9 @@ int buff_init(){
 		buffer[i] = calloc(S_FPATH + 1, sizeof(char) );
 		assert( buffer[i] != NULL );
 	}
+	
+	log_mess = calloc(S_LOGMESS, sizeof(char) );
+
 	fillptr = 0;
 	useptr = 0;
 	numfill = 0;
@@ -87,6 +94,7 @@ void *consume(void *arg){
 			free(item);
 			return NULL;
 		}
+		buff_proc(item);
 #ifdef DEBUG
 		printf("Item: %s, numfill{C}: %d\n", item, numfill);
 #endif
@@ -96,6 +104,31 @@ void *consume(void *arg){
 		free(item);
 	}
 	return NULL;
+}
+
+void buff_proc( char *item){
+
+	struct stat s_file;
+	int status;
+
+#ifdef DEBUG
+	strncpy(log_mess, "Thread NUM checking ", S_LOGMESS);
+	strncat(log_mess, item, S_LOGMESS);
+	strncat(log_mess, ".", S_LOGMESS);
+	log_write( LOG_VERB, log_mess); 
+#endif
+
+	status = stat( item, &s_file );
+	if( status == -1 ){
+#ifdef DEBUG
+		strncpy(log_mess, "Unable to stat ", S_LOGMESS);
+		strncat(log_mess, item, S_LOGMESS);
+		strncat(log_mess, " -> ", S_LOGMESS); 
+		strncat(log_mess, strerror(errno), S_LOGMESS); 
+		log_write( LOG_ERR, log_mess); 
+#endif
+		return;
+	}
 }
 
  /* This only works with on producer :(
@@ -125,7 +158,7 @@ void buff_free(){
 	for(int i = 0; i < S_BBUFF; i++){
 		free(buffer[i]);
 	}
-
+	free(log_mess);
 	free(buffer);
 	pthread_cond_destroy( &cv_remove );
 	pthread_cond_destroy( &cv_fill );

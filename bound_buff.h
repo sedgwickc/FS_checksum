@@ -21,6 +21,13 @@ typedef struct {
 	char *checksum;
 }File;
 
+typedef struct {
+	int thread_num;
+	size_t bytes_read;
+	int num_files;
+	File *f;
+} Thread;
+
 extern char **buffer;
 extern int fillptr;
 extern int useptr;
@@ -39,6 +46,8 @@ void buff_get( char **item );
 void produce();
 
 void *consume( void * );
+
+void buff_proc( char *item);
 
 void buff_pdone();
 

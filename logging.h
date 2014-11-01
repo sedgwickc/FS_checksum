@@ -12,8 +12,9 @@
 #define LOG_WARN 2
 #define LOG_ERR 3
 #define LOG_DEBUG 4
+#define LOG_VERB 5
 
-const char *log_types[5];
+const char *log_types[6];
 
 char *log_path();
 

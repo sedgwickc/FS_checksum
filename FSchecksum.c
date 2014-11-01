@@ -40,14 +40,19 @@ int main(int argc, char* argv[]){
 	num_worker = 0;
 
 	log_create();
+#ifdef DEBUG
+	strncpy( log_mess, "Verbose logging set.", S_LOGMESS );
+	log_write( LOG_VERB, log_mess );
+#endif
+
 	/* getopt code based off of example code found in getopt man page */
 	while( (opt = getopt(argc, argv, "n:")) != -1 ){
 		switch (opt){
 			case 'n':
 				if( (num_worker = atoi(optarg)) > 0 ){
-					strncat(log_mess, "Running with ", S_LOGMESS);
+					strncpy(log_mess, "Running with ", S_LOGMESS);
 					strncat(log_mess, optarg, S_LOGMESS);
-					strncat(log_mess, " threads. \n", S_LOGMESS);
+					strncat(log_mess, " threads.", S_LOGMESS);
 					log_write(LOG_INFO, log_mess);
 				} else {
 					printf("Cannot have 0 workers\n");

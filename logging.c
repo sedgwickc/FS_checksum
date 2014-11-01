@@ -17,7 +17,8 @@ const char *log_types[] = { "INFO: ",
 						"ACTION: ", 
 						"WARNING: ", 
 						"ERROR: ",
-						"DEBUG: " };
+						"DEBUG: ",
+						"VERBOSE:"};
 
 char *log_path(){
 
@@ -64,7 +65,7 @@ void log_create(char *dir_name){
 	assert(fd != NULL);
 	
 	strftime(date_time, sizeof(date_time), "%c", localtime( &cur_time ) );
-	fprintf(fd, "[ %s ] Info: Initializing file system checksumming started.\n",
+	fprintf(fd, "[ %s ] INFO: Initializing file system checksumming started.\n",
 			date_time);
 
 	free(path);

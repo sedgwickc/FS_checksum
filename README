@@ -1,0 +1,33 @@
+Charles Sedgwick
+1684807
+
+FSchecksum Overview
+-------------------
+
+Commands
+--------
+
+make: will build FSchechsum without debugging 
+
+make all: same as make
+
+make FSchecksum: same as make
+
+make debug: will build FSchecksum with debugging set
+
+make clean: will remove  *.o and executable files from build directory
+
+FSchecksum[_debug] -n NUM FILE: will execute FSchecksum. 
+-> NUM and FILE are not optional. 
+-> If NUM is not greater than zero or FILE is not a valid file, FSchecksum 
+   will exit in with an error. 
+-> The NUM argument represents the number of
+   worker threads that FSchecksum will create to do the checksumming of 
+   files. 
+-> The FILE argument should be a valid path to a config file containing 
+   files and their expected checksums. 
+   - Example config file:
+
+		8c206a1a87599f532ce68675536f0b1546900d7a  test/dat_files/ten_mb.dat
+		7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6  test/dat_files/two_mb.dat
+		c312da918d0163b8301c70a121b8b0fbd50bc601  test/dat_files/forty_mb.dat
