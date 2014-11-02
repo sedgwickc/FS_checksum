@@ -17,7 +17,7 @@
 #include <openssl/sha.h>
 
 typedef struct {
-	char *file_name;
+	char *filename;
 	char *checksum;
 }File;
 
@@ -25,10 +25,12 @@ typedef struct {
 	int thread_num;
 	size_t bytes_read;
 	int num_files;
-	File *f;
-} Thread;
+	File *data;
+}Thread;
 
-extern char **buffer;
+extern File **buffer;
+extern Thread **threads;
+extern int num_workers;
 extern int fillptr;
 extern int useptr;
 extern int numfill;
@@ -37,17 +39,17 @@ extern pthread_mutex_t l_bbuff;
 extern pthread_cond_t cv_remove;
 extern pthread_cond_t cv_fill;
 
-int buff_init();
+int buff_init(int num_workers);
 
-void buff_fill( char *new_file );
+void buff_fill( File *f );
 
-void buff_get( char **item );
+void buff_get( File **data );
 
 void produce();
 
 void *consume( void * );
 
-void buff_proc( char *item);
+void buff_proc( File *f);
 
 void buff_pdone();
 

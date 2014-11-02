@@ -12,7 +12,9 @@
 #include "logging.h"
 #include "memwatch.h"
 
-char **buffer;
+File **buffer;
+Thread **threads;
+int num_workers;
 char *log_mess;
 int fillptr;
 int useptr; 
@@ -23,17 +25,41 @@ pthread_mutex_t l_bbuff;
 pthread_cond_t cv_remove;
 pthread_cond_t cv_fill;
 
-int buff_init(){
+int buff_init(int nw){
+
+	num_workers = nw;
 
 	pthread_mutex_init( &l_bbuff, NULL );	
 	pthread_cond_init( &cv_remove, NULL );
 	pthread_cond_init( &cv_fill, NULL );
 
-	buffer = malloc(sizeof(char*) * S_BBUFF );
+	buffer = malloc(sizeof(File*) * S_BBUFF );
 	assert( buffer != NULL );
 	for( int i = 0; i < S_BBUFF; i++){
-		buffer[i] = calloc(S_FPATH + 1, sizeof(char) );
+		buffer[i] = malloc( sizeof(File) );
 		assert( buffer[i] != NULL );
+		
+		buffer[i]->filename = calloc( S_FPATH + 1, sizeof(char) );
+		assert( buffer[i]->filename != NULL );
+
+		buffer[i]->checksum = calloc( S_CHKSUM, sizeof(char) );
+		assert( buffer[i]->checksum != NULL );
+	}
+
+	threads = malloc( sizeof(Thread*) * num_workers );
+	assert( threads != NULL );
+	for( int i = 0; i < num_workers; i++ ){
+		threads[i] = malloc( sizeof(Thread) );
+		assert( threads[i] != NULL );
+
+		threads[i]->data = malloc( sizeof(File) );
+		assert( threads[i]->data != NULL );
+
+		threads[i]->data->filename = calloc( S_FPATH + 1, sizeof(char) );
+		assert( threads[i]->data->filename != NULL );
+
+		threads[i]->data->checksum = calloc( S_CHKSUM, sizeof(char) );
+		assert( threads[i]->data->checksum != NULL );
 	}
 	
 	log_mess = calloc(S_LOGMESS, sizeof(char) );
@@ -45,29 +71,38 @@ int buff_init(){
 	return 0;
 }
 
-void buff_fill(char *new_file){
+void buff_fill(File *data){
 	pthread_mutex_lock( &l_bbuff );
-	strncpy(buffer[fillptr], new_file, S_FPATH);
+	strncpy(buffer[fillptr]->filename, data->filename, S_FPATH );
+	strncpy(buffer[fillptr]->checksum, data->checksum, S_CHKSUM );
 	numfill++;
 	fillptr = (fillptr + 1) % S_BBUFF;
 	pthread_mutex_unlock( &l_bbuff );
 }
 
-void buff_get(char **path){
-	*path = calloc(S_FPATH + 1, sizeof(char));
-	assert(*path != NULL);
-	strncpy(*path, buffer[useptr], S_FPATH);
+void buff_get(File **file){
+	*file = malloc( sizeof(File) );
+	assert( *file != NULL );
+
+	(*file)->filename = calloc(S_FPATH + 1, sizeof(char));
+	assert( (*file)->filename != NULL);
+
+	(*file)->checksum = calloc(S_CHKSUM, sizeof(char) );
+	assert( (*file)->checksum != NULL);
+
+	strncpy( (*file)->filename, buffer[useptr]->filename, S_FPATH );
+	strncpy( (*file)->checksum, buffer[useptr]->checksum, S_CHKSUM );
 	useptr = (useptr + 1) % S_BBUFF;
 	numfill--;
 }
 
-void produce(char *file_name){
+void produce(File *data){
 	pthread_mutex_lock( &l_bbuff );
 	while(numfill == S_BBUFF){
 		pthread_cond_wait( &cv_remove, &l_bbuff );
 	}
 	pthread_mutex_unlock( &l_bbuff );
-	buff_fill(file_name);
+	buff_fill( data );
 	pthread_mutex_lock( &l_bbuff );
 	pthread_cond_signal( &cv_fill );
 	pthread_mutex_unlock( &l_bbuff );
@@ -84,45 +119,49 @@ void *consume(void *arg){
 		while ( numfill == 0 && pdone == 0 ){
 			pthread_cond_wait( &cv_fill, &l_bbuff );
 		}
-		char *item = NULL;
-		buff_get(&item);
+		File *file = NULL;
+		buff_get(&file);
 		pthread_mutex_unlock( &l_bbuff );
 		/* thread connot end while having lock or no other thread will be able
 		 * to grab it
 		 */
-		if( strncmp( item, "DONE", S_BBUFF ) == 0){
-			free(item);
+		if( strncmp( file->filename, "DONE", S_FPATH ) == 0){
+			free(file->filename);
+			free(file->checksum);
+			free(file);
 			return NULL;
 		}
-		buff_proc(item);
+		buff_proc(file);
 #ifdef DEBUG
-		printf("Item: %s, numfill{C}: %d\n", item, numfill);
+		printf("File: %s, numfill{C}: %d\n", file->filename, numfill);
 #endif
 		pthread_mutex_lock( &l_bbuff );
 		pthread_cond_signal( &cv_remove );
 		pthread_mutex_unlock( &l_bbuff );
-		free(item);
+		free(file->filename);
+		free(file->checksum);
+		free(file);
 	}
 	return NULL;
 }
 
-void buff_proc( char *item){
+void buff_proc( File *file){
 
 	struct stat s_file;
 	int status;
 
 #ifdef DEBUG
 	strncpy(log_mess, "Thread NUM checking ", S_LOGMESS);
-	strncat(log_mess, item, S_LOGMESS);
+	strncat(log_mess, file->filename, S_LOGMESS);
 	strncat(log_mess, ".", S_LOGMESS);
 	log_write( LOG_VERB, log_mess); 
 #endif
 
-	status = stat( item, &s_file );
+	status = stat( file->filename, &s_file );
 	if( status == -1 ){
 #ifdef DEBUG
 		strncpy(log_mess, "Unable to stat ", S_LOGMESS);
-		strncat(log_mess, item, S_LOGMESS);
+		strncat(log_mess, file->filename, S_LOGMESS);
 		strncat(log_mess, " -> ", S_LOGMESS); 
 		strncat(log_mess, strerror(errno), S_LOGMESS); 
 		log_write( LOG_ERR, log_mess); 
@@ -137,13 +176,14 @@ void buff_proc( char *item){
   * to get a signal from the producer that there are new elements to be consumed
  */
 void buff_pdone(){
+	File done = {"DONE", "DONE"};
 	pthread_mutex_lock( &l_bbuff );
 	while ( numfill > 0 ){
 		pthread_cond_wait( &cv_remove, &l_bbuff );
 	}
 	pthread_mutex_unlock( &l_bbuff );
 	for(int i = 0; i < S_BBUFF; i++){
-		produce("DONE");
+		produce(&done);
 	}
 	pthread_mutex_lock( &l_bbuff );
 	pdone++;
@@ -156,10 +196,21 @@ void buff_free(){
 	pthread_mutex_destroy(&l_bbuff);
 
 	for(int i = 0; i < S_BBUFF; i++){
+		free(buffer[i]->filename);
+		free(buffer[i]->checksum);
 		free(buffer[i]);
 	}
+
+	for( int i = 0; i < num_workers; i++ ){
+		free(threads[i]->data->checksum);
+		free(threads[i]->data->filename);
+		free(threads[i]->data);
+		free(threads[i]);
+	}
+	
 	free(log_mess);
 	free(buffer);
+	free(threads);
 	pthread_cond_destroy( &cv_remove );
 	pthread_cond_destroy( &cv_fill );
 }
