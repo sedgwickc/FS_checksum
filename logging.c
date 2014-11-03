@@ -14,11 +14,11 @@
 #include "memwatch.h"
 
 const char *log_types[] = { "INFO: ",
-						"ACTION: ", 
-						"WARNING: ", 
-						"ERROR: ",
-						"DEBUG: ",
-						"VERBOSE:"};
+				"ACTION: ", 
+				"WARNING: ", 
+				"ERROR: ",
+				"DEBUG: ",
+				"VERBOSE:"};
 
 char *log_path(){
 
@@ -26,9 +26,10 @@ char *log_path(){
 	char *log_var = getenv(LOG_VAR);
 	
 	if(log_var == NULL){
-		strncpy(log_path,LOG_PATH, S_LPATH);
+		strncpy( log_path, LOG_PATH, S_LPATH );
 	} else {
-		strncpy(log_path, log_var, S_LPATH);
+		strncpy( log_path, log_var, S_LPATH );
+		strncat( log_path, "/FSchksum.log", S_LPATH );
 	}
 
 	return log_path;
@@ -60,7 +61,9 @@ void log_create(char *dir_name){
 	char *path = log_path();
 	time_t cur_time = time(NULL);
 	char date_time[26];
-
+#ifdef DEBUG
+	printf("log_path: %s\n", path);
+#endif
 	fd = fopen (path, "w");
 	assert(fd != NULL);
 	

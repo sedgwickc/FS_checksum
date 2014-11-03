@@ -47,7 +47,7 @@ void buff_fill( File *f );
 
 void buff_get( File **data );
 
-void produce();
+void produce(File *data);
 
 void *consume( void * );
 
