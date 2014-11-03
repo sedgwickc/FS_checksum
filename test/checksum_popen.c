@@ -9,9 +9,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include <assert.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
+
 
 #define S_CHECK 128
 
@@ -21,23 +22,30 @@ int main(int argc, char* argv[]){
 	char cmdline[64] = "sha1sum ";
 	char checksum[S_CHECK];
 	int rv;
+	clock_t time;
+	clock_t total = 0;
 
-	if( argc == 2){
-		strcat(cmdline, argv[1]);
-	} else {
-		printf("Usage: checksum [-n num_workers] FILE\n");
+	if( argc != 2){
+		printf("Usage: checksum FILE\n");
 		return 0;
 	}
 
-	pd = popen(cmdline, "r");
-	fgets(checksum, S_CHECK, pd);
+	strcat(cmdline, argv[1]);
+	for (int i = 0; i < 10; i++ ){
 
-	if ( (rv = pclose(pd)) == -1 ){
-		printf("checksum_popen.c:: pclose() returned an error.\n");
+		time = clock();
+
+		pd = popen(cmdline, "r");
+		fgets(checksum, S_CHECK, pd);
+
+		if ( (rv = pclose(pd)) == -1 ){
+			printf("checksum_popen.c:: pclose() returned an error.\n");
+		}
+
+		total += clock() - time;
 	}
 
-	printf("%s\n", checksum);
-
+	printf("The average time over 10 runs is: %f seconds.\n", ( (float)total / CLOCKS_PER_SEC ) / 10 );
 
 	return 0;
 }

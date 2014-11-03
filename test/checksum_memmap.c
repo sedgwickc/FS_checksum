@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <sys/mman.h>
+#include <time.h>
 
 int main(int argc, char *argv[]){
 
@@ -21,6 +22,8 @@ int main(int argc, char *argv[]){
 	long s_page = sysconf(_SC_PAGESIZE);
 	unsigned char *data;
 	struct stat s_file;
+	clock_t time; 
+	clock_t total = 0;
 
 	SHA_CTX c;
 	unsigned char md[ SHA_DIGEST_LENGTH ];
@@ -30,29 +33,32 @@ int main(int argc, char *argv[]){
 		return 1;
 	}
 
-	fd = open(argv[1], O_RDONLY );
-	assert( fd != -1);
 
-	status = stat(argv[1], &s_file);
-	assert( status != -1 );
+	for( int i = 0; i < 10; i++ ){
+		fd = open(argv[1], O_RDONLY );
+		assert( fd != -1);
 
-	data = mmap(0, s_file.st_size, PROT_READ, MAP_SHARED, fd, 0);
-	assert ( data != MAP_FAILED );
+		status = stat(argv[1], &s_file);
+		assert( status != -1 );
 
-	SHA1_Init(&c);
+		data = mmap(0, s_file.st_size, PROT_READ, MAP_SHARED, fd, 0);
+		assert ( data != MAP_FAILED );
+		
+		time = clock();
 
-	/* why does update need num_bytes rather than S_BUF?
-	 * if using S_BUF in update, it must be set to 160
-	 */
-	SHA1(data, s_file.st_size,md);
-	
-	printf("The SHA1 chechsum of %s is ", argv[1]);
-	for ( int i = 0; i < SHA_DIGEST_LENGTH; i++){
-		printf("%x", md[i]);
+		SHA1_Init(&c);
+
+		/* why does update need num_bytes rather than S_BUF?
+	 	 * if using S_BUF in update, it must be set to 160
+	 	 */
+		SHA1(data, s_file.st_size,md);
+
+		total += clock() - time;
+		
+		munmap(data, s_page);
 	}
-	printf("\n");
-
-	munmap(data, s_page);
+	
+	printf("The average time over 10 runs is: %f seconds.\n", ( (float)total / CLOCKS_PER_SEC ) / 10 );
 
 
 	return 0;

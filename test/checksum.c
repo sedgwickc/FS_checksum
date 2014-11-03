@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+#include <time.h>
 
 /* manipulated variable */
 #define S_BUF 1024
@@ -25,31 +26,35 @@ int main(int argc, char* argv[]){
 	unsigned char md[ SHA_DIGEST_LENGTH ];
 	int fd;
 	int num_bytes = 0;
+	clock_t time;
+	clock_t total = 0;
 	
 	if( argc == 2){
-		fd = open(argv[1], O_RDONLY);
-		assert( fd != -1 );
+		for( int i = 0; i < 10; i++ ){
+
+			fd = open(argv[1], O_RDONLY);
+			assert( fd != -1 );
+			time = clock();
+
+			SHA1_Init(&c);
+
+			while ( (num_bytes = read( fd, buffer, S_BUF)) != 0 ){
+				SHA1_Update( &c, buffer, num_bytes );
+			}
+
+			SHA1_Final( md, &c );
+			/*removing assignment "time = clock() - time" shaved off a tenth of a second
+ 	 		 * from run time
+ 	 		 */
+			total += clock() - time;
+		}
 	} else {
-		printf("Usage: checksum [-n num_workers] FILE\n");
+		printf("Usage: checksum FILE\n");
 		return 0;
 	}
 
-	SHA1_Init(&c);
 
-	/* why does update need num_bytes rather than S_BUF?
-	 * if using S_BUF in update, it must be set to 160
-	 */
-	while ( (num_bytes = read( fd, buffer, S_BUF)) != 0 ){
-		SHA1_Update( &c, buffer, num_bytes );
-	}
+	printf("Average time over 10 runs: %f seconds\n", ( (float)total / CLOCKS_PER_SEC ) / 10 );
 
-	SHA1_Final( md, &c );
-
-	printf("The SHA1 chechsum of %s is ", argv[1]);
-	for ( int i = 0; i < SHA_DIGEST_LENGTH; i++){
-		printf("%x", md[i]);
-	}
-	printf("\n");
-	
 	return 0;
 }
