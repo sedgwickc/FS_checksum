@@ -13,7 +13,7 @@
 #include "memwatch.h"
 
 File **buffer;
-Thread **threads;
+Thread **workers;
 int num_workers;
 char *log_mess;
 int fillptr;
@@ -46,20 +46,20 @@ int buff_init(int nw){
 		assert( buffer[i]->checksum != NULL );
 	}
 
-	threads = malloc( sizeof(Thread*) * num_workers );
-	assert( threads != NULL );
+	workers = malloc( sizeof(Thread*) * num_workers );
+	assert( workers != NULL );
 	for( int i = 0; i < num_workers; i++ ){
-		threads[i] = malloc( sizeof(Thread) );
-		assert( threads[i] != NULL );
+		workers[i] = malloc( sizeof(Thread) );
+		assert( workers[i] != NULL );
 
-		threads[i]->data = malloc( sizeof(File) );
-		assert( threads[i]->data != NULL );
+		workers[i]->data = malloc( sizeof(File) );
+		assert( workers[i]->data != NULL );
 
-		threads[i]->data->filename = calloc( S_FPATH + 1, sizeof(char) );
-		assert( threads[i]->data->filename != NULL );
+		workers[i]->data->filename = calloc( S_FPATH + 1, sizeof(char) );
+		assert( workers[i]->data->filename != NULL );
 
-		threads[i]->data->checksum = calloc( S_CHKSUM, sizeof(char) );
-		assert( threads[i]->data->checksum != NULL );
+		workers[i]->data->checksum = calloc( S_CHKSUM, sizeof(char) );
+		assert( workers[i]->data->checksum != NULL );
 	}
 	
 	log_mess = calloc(S_LOGMESS, sizeof(char) );
@@ -69,6 +69,13 @@ int buff_init(int nw){
 	numfill = 0;
 	pdone = 0;
 	return 0;
+}
+
+pthread_t  buff_add_worker(int index){
+		pthread_t tid;
+		pthread_create(&tid, NULL, consume, NULL);
+		workers[index]->thread_id = tid;
+		return tid;
 }
 
 void buff_fill(File *data){
@@ -108,7 +115,7 @@ void produce(File *data){
 	pthread_mutex_unlock( &l_bbuff );
 }
 
-/* need condition that will allow threads to break out of while loop 
+/* need condition that will allow workers to break out of while loop 
  * Need to be aable to handle situation where the number of consumers is greater
  * than the number of slots in the buffer as this will cause (# consumers - #
  * buff slots) to be stuck sleeping forever on numfill == 0
@@ -148,13 +155,17 @@ void *consume(void *arg){
 void buff_proc( File *file){
 
 	struct stat s_file;
+	char t_num[20];
 	int status;
+	pthread_t id = pthread_self();
+	sprintf( t_num, "%u", (unsigned)id );
 
 #ifdef DEBUG
-	strncpy(log_mess, "Thread NUM checking ", S_LOGMESS);
-	strncat(log_mess, file->filename, S_LOGMESS);
-	strncat(log_mess, ".", S_LOGMESS);
-	log_write( LOG_VERB, log_mess); 
+	strncpy( log_mess, "Thread ", S_LOGMESS );
+	strncat( log_mess, t_num, S_LOGMESS );
+	strncat( log_mess, " checking ", S_LOGMESS );
+	strncat( log_mess, file->filename, S_LOGMESS );
+	log_write( LOG_VERB, log_mess ); 
 #endif
 
 	status = stat( file->filename, &s_file );
@@ -202,15 +213,15 @@ void buff_free(){
 	}
 
 	for( int i = 0; i < num_workers; i++ ){
-		free(threads[i]->data->checksum);
-		free(threads[i]->data->filename);
-		free(threads[i]->data);
-		free(threads[i]);
+		free(workers[i]->data->checksum);
+		free(workers[i]->data->filename);
+		free(workers[i]->data);
+		free(workers[i]);
 	}
 	
 	free(log_mess);
 	free(buffer);
-	free(threads);
+	free(workers);
 	pthread_cond_destroy( &cv_remove );
 	pthread_cond_destroy( &cv_fill );
 }

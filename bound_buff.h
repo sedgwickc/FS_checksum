@@ -22,7 +22,7 @@ typedef struct {
 }File;
 
 typedef struct {
-	int thread_num;
+	pthread_t thread_id;
 	size_t bytes_read;
 	int num_files;
 	File *data;
@@ -40,6 +40,8 @@ extern pthread_cond_t cv_remove;
 extern pthread_cond_t cv_fill;
 
 int buff_init(int num_workers);
+
+pthread_t buff_add_worker(int index);
 
 void buff_fill( File *f );
 

@@ -83,7 +83,7 @@ int main(int argc, char* argv[]){
 		/* create a Thread struct for each thread and add it to a global list of
 		 * threads defined in bound_buff api
 		 */
-		pthread_create(&workers[i], NULL, consume, NULL);
+		workers[i] = buff_add_worker(i);
 	}
 
 	int fd, status, offset;
