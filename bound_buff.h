@@ -53,6 +53,8 @@ void *consume( void * );
 
 void buff_proc( File *f);
 
+void gen_checksum(char *filepath, unsigned char *checksum);
+
 void buff_pdone();
 
 void buff_free();

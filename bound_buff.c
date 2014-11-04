@@ -8,6 +8,10 @@
 #include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <openssl/sha.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include "bound_buff.h"
 #include "logging.h"
 #include "memwatch.h"
@@ -42,7 +46,7 @@ int buff_init(int nw){
 		buffer[i]->filename = calloc( S_FPATH + 1, sizeof(char) );
 		assert( buffer[i]->filename != NULL );
 
-		buffer[i]->checksum = calloc( S_CHKSUM, sizeof(char) );
+		buffer[i]->checksum = calloc( S_CHKSUM + 1, sizeof(char) );
 		assert( buffer[i]->checksum != NULL );
 	}
 
@@ -58,7 +62,7 @@ int buff_init(int nw){
 		workers[i]->data->filename = calloc( S_FPATH + 1, sizeof(char) );
 		assert( workers[i]->data->filename != NULL );
 
-		workers[i]->data->checksum = calloc( S_CHKSUM, sizeof(char) );
+		workers[i]->data->checksum = calloc( S_CHKSUM + 1, sizeof(char) );
 		assert( workers[i]->data->checksum != NULL );
 	}
 	
@@ -94,7 +98,7 @@ void buff_get(File **file){
 	(*file)->filename = calloc(S_FPATH + 1, sizeof(char));
 	assert( (*file)->filename != NULL);
 
-	(*file)->checksum = calloc(S_CHKSUM, sizeof(char) );
+	(*file)->checksum = calloc(S_CHKSUM + 1, sizeof(char) );
 	assert( (*file)->checksum != NULL);
 
 	strncpy( (*file)->filename, buffer[useptr]->filename, S_FPATH );
@@ -152,10 +156,15 @@ void *consume(void *arg){
 	return NULL;
 }
 
+/* refernces:
+ * convert hash to string: https://www.gidforums.com/t-8600.html
+ */
+
 void buff_proc( File *file){
 
 	struct stat s_file;
 	char t_num[20];
+	unsigned char *checksum = calloc( SHA_DIGEST_LENGTH, sizeof( unsigned char ) );
 	int status;
 	pthread_t id = pthread_self();
 	sprintf( t_num, "%u", (unsigned)id );
@@ -179,6 +188,47 @@ void buff_proc( File *file){
 #endif
 		return;
 	}
+
+	gen_checksum( file->filename, checksum );
+
+#ifdef DEBUG
+	printf("chksum_orig: %s, chksum_curr: ", file->checksum );
+	for(int i = 0; i < SHA_DIGEST_LENGTH; i++){
+		printf("%02x", checksum[i]);
+	}
+	printf("\n");
+#endif
+
+	free(checksum);
+}
+
+void gen_checksum(char *filepath, unsigned char *checksum){
+	int fd, status;
+	long s_page = sysconf(_SC_PAGESIZE);
+	unsigned char *data;
+	struct stat s_file;
+
+	SHA_CTX c;
+	unsigned char md[ SHA_DIGEST_LENGTH ];
+	
+	status = stat(filepath, &s_file);
+	assert( status != -1 );
+
+	fd = open( filepath, O_RDONLY );
+	assert( fd != -1);
+
+	data = mmap( 0, s_file.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	assert ( data != MAP_FAILED );
+	
+	SHA1_Init(&c);
+
+	SHA1(data, s_file.st_size,md);
+
+	for(int i = 0; i < SHA_DIGEST_LENGTH; i++){
+		checksum[i] = md[i];
+	}
+
+	munmap(data, s_page);
 }
 
  /* This only works with on producer :(

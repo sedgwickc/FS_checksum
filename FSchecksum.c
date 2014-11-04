@@ -90,7 +90,7 @@ int main(int argc, char* argv[]){
 	char *data;
 	struct stat s_file;
 	File *file = malloc(sizeof(File));
-	file->checksum = calloc(40 + 1, sizeof(unsigned char));
+	file->checksum = calloc(S_CHKSUM + 1, sizeof(unsigned char));
 	file->filename = calloc(S_FPATH + 1, sizeof(char));
 
 	fd = open(argv[optind], O_RDONLY );
