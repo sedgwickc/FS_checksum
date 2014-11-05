@@ -164,10 +164,6 @@ void *consume(void *arg){
 	return NULL;
 }
 
-/* refernces:
- * convert hash to string: https://www.gidforums.com/t-8600.html
- */
-
 void buff_proc( File *file){
 
 	struct stat s_file;

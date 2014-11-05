@@ -19,25 +19,6 @@
 
 int main(int argc, char* argv[]){
 
-	/* bounded buffer
-	 * references:
-	 * http://www.cs.mtu.edu/~shene/NSF-3/e-Book/SEMA/TM-example-buffer.html
-	 * https://computing.llnl.gov/tutorials/pthreads/
-	 *
-	 * Upon creation of a thread, a Thread struct is created and populated with
-	 * information regarding that thread. this information will be used for
-	 * logging.
-	 *
-	 * main thread is the producer  
-	 * -> it places pointers to File struct into the buffer
-	 *
-	 * the worker threads are the consumers 
-	 * -> each worker grabs a File* from the buffer and starts to generate
-	 *  the checksum of the file 
-	 * -> once complete, it determines if the checksum is valid and marks the
-	 *  buffer slot as free for the producer to fill again
-	 */
-
 	char *log_mess = (char *)calloc(S_LOGMESS, sizeof(char));
 	int num_workers;
 	int opt;
