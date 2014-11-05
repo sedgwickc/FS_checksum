@@ -42,7 +42,7 @@ int main(int argc, char* argv[]){
 	int num_workers;
 	int opt;
 
-	log_create();
+	log_init();
 #ifdef DEBUG
 	strncpy( log_mess, "Verbose logging set.", S_LOGMESS );
 	log_write( LOG_VERB, log_mess );
@@ -121,5 +121,6 @@ int main(int argc, char* argv[]){
 	free(file);
 	buff_free();
 	free(log_mess);
+	log_close();
 	return 0;
 }

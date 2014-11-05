@@ -6,9 +6,8 @@
  * References:
  * http://beej.us/guide/bgipc/output/html/multipage/semaphores.html
  */
-
 #define _XOPEN_SOURCE 699 
-#define S_BBUFF 5
+#define S_BBUFF 50
 #define S_FPATH 64
 #define S_CHKSUM 40
 

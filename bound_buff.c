@@ -92,15 +92,8 @@ void buff_fill(File *data){
 }
 
 void buff_get(File **file){
-	*file = malloc( sizeof(File) );
-	assert( *file != NULL );
 
-	(*file)->filename = calloc(S_FPATH + 1, sizeof(char));
-	assert( (*file)->filename != NULL);
-
-	(*file)->checksum = calloc(S_CHKSUM + 1, sizeof(char) );
-	assert( (*file)->checksum != NULL);
-
+	assert( *file != NULL);
 	strncpy( (*file)->filename, buffer[useptr]->filename, S_FPATH );
 	strncpy( (*file)->checksum, buffer[useptr]->checksum, S_CHKSUM );
 	useptr = (useptr + 1) % S_BBUFF;
@@ -119,39 +112,40 @@ void produce(File *data){
 	pthread_mutex_unlock( &l_bbuff );
 }
 
-/* need condition that will allow workers to break out of while loop 
- * Need to be aable to handle situation where the number of consumers is greater
- * than the number of slots in the buffer as this will cause (# consumers - #
- * buff slots) to be stuck sleeping forever on numfill == 0
- * */
 void *consume(void *arg){
+	File *file = malloc( sizeof(File) );
+	assert( file != NULL );
+
+	file->filename = calloc(S_FPATH + 1, sizeof(char));
+	assert( file->filename != NULL);
+
+	file->checksum = calloc(S_CHKSUM + 1, sizeof(char) );
+	assert( file->checksum != NULL);
+	
 	while( 1 ){
 		pthread_mutex_lock( &l_bbuff );
 		while ( numfill == 0 && pdone == 0 ){
 			pthread_cond_wait( &cv_fill, &l_bbuff );
 		}
-		File *file = NULL;
+		memset(file->filename, 0, S_FPATH );
+		memset(file->checksum, 0, S_CHKSUM );
 		buff_get(&file);
 		pthread_mutex_unlock( &l_bbuff );
-		/* thread connot end while having lock or no other thread will be able
-		 * to grab it
-		 */
-		if( strncmp( file->filename, "DONE", S_FPATH ) == 0){
-			free(file->filename);
-			free(file->checksum);
-			free(file);
+		if( strncmp( file->filename, "DONE", S_FPATH ) == 0 ){
+			if( file != NULL ){
+				free( file->filename );
+				free( file->checksum );
+				free( file );
+			}
 			return NULL;
 		}
-		buff_proc(file);
+		buff_proc( file );
 #ifdef DEBUG
 		printf("File: %s, numfill{C}: %d\n", file->filename, numfill);
 #endif
 		pthread_mutex_lock( &l_bbuff );
 		pthread_cond_signal( &cv_remove );
 		pthread_mutex_unlock( &l_bbuff );
-		free(file->filename);
-		free(file->checksum);
-		free(file);
 	}
 	return NULL;
 }
@@ -174,7 +168,7 @@ void buff_proc( File *file){
 	strncat( log_mess, t_num, S_LOGMESS );
 	strncat( log_mess, " checking ", S_LOGMESS );
 	strncat( log_mess, file->filename, S_LOGMESS );
-	log_write( LOG_VERB, log_mess ); 
+	log_write( LOG_VERB, log_mess );
 #endif
 
 	status = stat( file->filename, &s_file );
@@ -185,21 +179,33 @@ void buff_proc( File *file){
 		strncat(log_mess, " -> ", S_LOGMESS); 
 		strncat(log_mess, strerror(errno), S_LOGMESS); 
 		log_write( LOG_ERR, log_mess); 
+		free(checksum);
 #endif
 		return;
 	}
 
 	gen_checksum( file->filename, checksum );
-
 #ifdef DEBUG
-	printf("chksum_orig: %s, chksum_curr: ", file->checksum );
 	for(int i = 0; i < SHA_DIGEST_LENGTH; i++){
 		printf("%02x", checksum[i]);
 	}
 	printf("\n");
 #endif
+	
+	char curr_checksum[S_CHKSUM + 1];
+	for (int i = 0; i < SHA_DIGEST_LENGTH; i++){
+		snprintf( curr_checksum+i*2, 3, "%02x", checksum[i] );
+	}
+	if( strncmp( file->checksum, curr_checksum, S_CHKSUM ) != 0){
+		printf( "ERROR: Checksum mismatch %s %s\n", file->checksum, curr_checksum );
+	}
 
-	free(checksum);
+
+#ifdef DEBUG
+	printf("chksum_orig: %s, chksum_curr: %s\n", file->checksum, curr_checksum );
+#endif
+
+	free( checksum );
 }
 
 void gen_checksum(char *filepath, unsigned char *checksum){
@@ -229,10 +235,10 @@ void gen_checksum(char *filepath, unsigned char *checksum){
 	}
 
 	munmap(data, s_page);
+	close(fd);
 }
 
- /* This only works with on producer :(
-  *
+ /*
   * if # consumers > # buff slots then there will be consumers sleeping waiting
   * to get a signal from the producer that there are new elements to be consumed
  */
@@ -254,7 +260,7 @@ void buff_pdone(){
 
 void buff_free(){
 	
-	pthread_mutex_destroy(&l_bbuff);
+	pthread_mutex_destroy( &l_bbuff );
 
 	for(int i = 0; i < S_BBUFF; i++){
 		free(buffer[i]->filename);
@@ -269,9 +275,9 @@ void buff_free(){
 		free(workers[i]);
 	}
 	
-	free(log_mess);
-	free(buffer);
-	free(workers);
+	free( log_mess );
+	free( workers );
+	free( buffer );
 	pthread_cond_destroy( &cv_remove );
 	pthread_cond_destroy( &cv_fill );
 }

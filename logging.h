@@ -1,6 +1,8 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
+#include <pthread.h>
+
 #define S_ERRMESS 128
 #define S_LOGMESS 128
 #define S_LPATH 128
@@ -15,11 +17,16 @@
 #define LOG_VERB 5
 
 const char *log_types[6];
+extern pthread_mutex_t l_log;
+
+void log_init();
 
 char *log_path();
 
 void log_write(int type, char *mess);
 
 void log_create();
+
+void log_close();
 
 #endif
