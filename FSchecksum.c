@@ -80,10 +80,7 @@ int main(int argc, char* argv[]){
 	buff_init(num_workers);
 	
 	for( int i = 0; i < num_workers; i++){
-		/* create a Thread struct for each thread and add it to a global list of
-		 * threads defined in bound_buff api
-		 */
-		workers[i] = buff_add_worker(i);
+		workers[i] = buff_add_worker((long)i);
 	}
 
 	int fd, status, offset;
@@ -114,6 +111,10 @@ int main(int argc, char* argv[]){
 	
 	for( int i = 0; i < num_workers; i++){
 		pthread_join(workers[i], (void *)&status );
+		if( status != 0 ){
+			strncpy( log_mess, strerror( status ), S_LOGMESS );
+			log_write( LOG_ERR, log_mess );
+		}
 	}
 
 	free(file->checksum);

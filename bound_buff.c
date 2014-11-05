@@ -31,7 +31,7 @@ pthread_cond_t cv_fill;
 
 int buff_init(int nw){
 
-	num_workers = nw;
+	num_workers = (int)nw;
 
 	pthread_mutex_init( &l_bbuff, NULL );	
 	pthread_cond_init( &cv_remove, NULL );
@@ -64,6 +64,8 @@ int buff_init(int nw){
 
 		workers[i]->data->checksum = calloc( S_CHKSUM + 1, sizeof(char) );
 		assert( workers[i]->data->checksum != NULL );
+
+		workers[i]->num_files = 0;
 	}
 	
 	log_mess = calloc(S_LOGMESS, sizeof(char) );
@@ -75,9 +77,9 @@ int buff_init(int nw){
 	return 0;
 }
 
-pthread_t  buff_add_worker(int index){
+pthread_t buff_add_worker(long index){
 		pthread_t tid;
-		pthread_create(&tid, NULL, consume, NULL);
+		pthread_create(&tid, NULL, consume, (void *)index);
 		workers[index]->thread_id = tid;
 		return tid;
 }
@@ -113,6 +115,9 @@ void produce(File *data){
 }
 
 void *consume(void *arg){
+
+	char t_id[20];
+	char t_files[20];
 	File *file = malloc( sizeof(File) );
 	assert( file != NULL );
 
@@ -137,11 +142,20 @@ void *consume(void *arg){
 				free( file->checksum );
 				free( file );
 			}
+			sprintf( t_id, "%u", (unsigned)workers[(long)arg]->thread_id );
+			strncpy( log_mess, "Thread ", S_LOGMESS );
+			strncat( log_mess, t_id, S_LOGMESS );
+			strncat( log_mess, " processed ", S_LOGMESS );
+			sprintf( t_files, "%d", workers[(long)arg]->num_files );
+			strncat( log_mess, t_files, S_LOGMESS );
+			strncat( log_mess, " files", S_LOGMESS );
+			log_write( LOG_INFO, log_mess );
 			return NULL;
 		}
 		buff_proc( file );
+		workers[(long)arg]->num_files++;
 #ifdef DEBUG
-		printf("File: %s, numfill{C}: %d\n", file->filename, numfill);
+		printf("t_index: %ld, fileno: %d\n", (long)arg, workers[(long)arg]->num_files);
 #endif
 		pthread_mutex_lock( &l_bbuff );
 		pthread_cond_signal( &cv_remove );
@@ -185,21 +199,20 @@ void buff_proc( File *file){
 	}
 
 	gen_checksum( file->filename, checksum );
-#ifdef DEBUG
-	for(int i = 0; i < SHA_DIGEST_LENGTH; i++){
-		printf("%02x", checksum[i]);
-	}
-	printf("\n");
-#endif
 	
 	char curr_checksum[S_CHKSUM + 1];
 	for (int i = 0; i < SHA_DIGEST_LENGTH; i++){
 		snprintf( curr_checksum+i*2, 3, "%02x", checksum[i] );
 	}
 	if( strncmp( file->checksum, curr_checksum, S_CHKSUM ) != 0){
-		printf( "ERROR: Checksum mismatch %s %s\n", file->checksum, curr_checksum );
+		strncpy(log_mess, "Mismatch detected ", S_LOGMESS);
+		strncat(log_mess, file->filename, S_LOGMESS);
+		strncat(log_mess, " got ", S_LOGMESS);
+		strncat(log_mess, curr_checksum, S_LOGMESS);
+		strncat(log_mess, " should be ", S_LOGMESS);
+		strncat(log_mess, file->checksum, S_LOGMESS);
+		log_write( LOG_WARN, log_mess); 
 	}
-
 
 #ifdef DEBUG
 	printf("chksum_orig: %s, chksum_curr: %s\n", file->checksum, curr_checksum );
@@ -238,10 +251,6 @@ void gen_checksum(char *filepath, unsigned char *checksum){
 	close(fd);
 }
 
- /*
-  * if # consumers > # buff slots then there will be consumers sleeping waiting
-  * to get a signal from the producer that there are new elements to be consumed
- */
 void buff_pdone(){
 	File done = {"DONE", "DONE"};
 	pthread_mutex_lock( &l_bbuff );

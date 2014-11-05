@@ -4,7 +4,7 @@
 #include <pthread.h>
 
 #define S_ERRMESS 128
-#define S_LOGMESS 128
+#define S_LOGMESS 256
 #define S_LPATH 128
 
 #define LOG_PATH "/tmp/FSchksum.log"

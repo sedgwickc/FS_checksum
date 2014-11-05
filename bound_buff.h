@@ -40,7 +40,7 @@ extern pthread_cond_t cv_fill;
 
 int buff_init(int num_workers);
 
-pthread_t buff_add_worker(int index);
+pthread_t buff_add_worker(long index);
 
 void buff_fill( File *f );
 

@@ -22,7 +22,5 @@ FSchecksum: FSchecksum.o logging.o bound_buff.o memwatch.o
 %_db.o: %.c
 	$(CC) $(CFLAGS_DEBUG) -o $@ $^ 
 
-test:
-
 clean:
 	rm *.o FSchecksum FSchecksum_debug
