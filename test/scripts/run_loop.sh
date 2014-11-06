@@ -12,8 +12,8 @@ echo "----------------------"
 
 echo
 echo "Running FSchecksum $NUM times with $T threads"
-echo "----------------------"
+echo "---------------------------------------------"
 for num in $( seq $NUM ) 
 do
-	../../FSchecksum -n $T ../usr_bin_sums
+	../../FSchecksum -n $T ./usr_bin_sums
 done
