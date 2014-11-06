@@ -14,6 +14,7 @@ make all: same as make
 make FSchecksum: same as make
 
 make debug: will build FSchecksum with debugging set
+-> there will be extra info printed to the log and STDOUT
 
 make clean: will remove  *.o and executable files from build directory
 
@@ -31,3 +32,8 @@ FSchecksum[_debug] -n NUM FILE: will execute FSchecksum.
 		8c206a1a87599f532ce68675536f0b1546900d7a  test/dat_files/ten_mb.dat
 		7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6  test/dat_files/two_mb.dat
 		c312da918d0163b8301c70a121b8b0fbd50bc601  test/dat_files/forty_mb.dat
+
+There are test scripts in test/scripts. They must be run from that directory. 
+-> run_loop NUM_THREADS NUM_ITERATIONS
+   -This script will generate a config file based on files in /usr/bin/ then 
+   it will run FSchecksum using this file with NUM_THREADS for NUM_ITERATIONS. 
