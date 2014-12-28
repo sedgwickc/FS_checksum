@@ -1,0 +1,127 @@
+
+============= MEMWATCH 2.71 Copyright (C) 1992-1999 Johan Lindh =============
+
+Started at Wed Nov  5 20:04:05 2014
+
+Modes: __STDC__ 64-bit mwDWORD==(unsigned int)
+mwROUNDALLOC==8 sizeof(mwData)==56 mwDataSize==56
+
+
+============= MEMWATCH 2.71 Copyright (C) 1992-1999 Johan Lindh =============
+
+Started at Wed Nov  5 20:05:36 2014
+
+Modes: __STDC__ 64-bit mwDWORD==(unsigned int)
+mwROUNDALLOC==8 sizeof(mwData)==56 mwDataSize==56
+
+
+Stopped at Wed Nov  5 20:05:37 2014
+
+
+Memory usage statistics (global):
+ N)umber of allocations made: 3801
+ L)argest memory usage      : 37784
+ T)otal of all alloc() calls: 130182
+ U)nfreed bytes totals      : 0
+
+============= MEMWATCH 2.71 Copyright (C) 1992-1999 Johan Lindh =============
+
+Started at Wed Nov  5 20:05:46 2014
+
+Modes: __STDC__ 64-bit mwDWORD==(unsigned int)
+mwROUNDALLOC==8 sizeof(mwData)==56 mwDataSize==56
+
+
+Stopped at Wed Nov  5 20:05:48 2014
+
+
+Memory usage statistics (global):
+ N)umber of allocations made: 4701
+ L)argest memory usage      : 68184
+ T)otal of all alloc() calls: 197782
+ U)nfreed bytes totals      : 0
+
+============= MEMWATCH 2.71 Copyright (C) 1992-1999 Johan Lindh =============
+
+Started at Wed Nov  5 20:08:25 2014
+
+Modes: __STDC__ 64-bit mwDWORD==(unsigned int)
+mwROUNDALLOC==8 sizeof(mwData)==56 mwDataSize==56
+
+
+Stopped at Wed Nov  5 20:08:32 2014
+
+
+Memory usage statistics (global):
+ N)umber of allocations made: 7401
+ L)argest memory usage      : 159364
+ T)otal of all alloc() calls: 400582
+ U)nfreed bytes totals      : 0
+
+============= MEMWATCH 2.71 Copyright (C) 1992-1999 Johan Lindh =============
+
+Started at Wed Nov  5 20:10:10 2014
+
+Modes: __STDC__ 64-bit mwDWORD==(unsigned int)
+mwROUNDALLOC==8 sizeof(mwData)==56 mwDataSize==56
+
+
+Stopped at Wed Nov  5 20:10:11 2014
+
+
+Memory usage statistics (global):
+ N)umber of allocations made: 11901
+ L)argest memory usage      : 311304
+ T)otal of all alloc() calls: 738582
+ U)nfreed bytes totals      : 0
+
+============= MEMWATCH 2.71 Copyright (C) 1992-1999 Johan Lindh =============
+
+Started at Wed Nov  5 20:10:57 2014
+
+Modes: __STDC__ 64-bit mwDWORD==(unsigned int)
+mwROUNDALLOC==8 sizeof(mwData)==56 mwDataSize==56
+
+
+Stopped at Wed Nov  5 20:10:59 2014
+
+
+Memory usage statistics (global):
+ N)umber of allocations made: 29901
+ L)argest memory usage      : 869406
+ T)otal of all alloc() calls: 2090582
+ U)nfreed bytes totals      : 0
+
+============= MEMWATCH 2.71 Copyright (C) 1992-1999 Johan Lindh =============
+
+Started at Wed Nov  5 22:43:44 2014
+
+Modes: __STDC__ 64-bit mwDWORD==(unsigned int)
+mwROUNDALLOC==8 sizeof(mwData)==56 mwDataSize==56
+
+
+Stopped at Wed Nov  5 22:43:44 2014
+
+
+Memory usage statistics (global):
+ N)umber of allocations made: 12732
+ L)argest memory usage      : 30574
+ T)otal of all alloc() calls: 1990146
+ U)nfreed bytes totals      : 0
+
+============= MEMWATCH 2.71 Copyright (C) 1992-1999 Johan Lindh =============
+
+Started at Wed Nov  5 22:45:26 2014
+
+Modes: __STDC__ 64-bit mwDWORD==(unsigned int)
+mwROUNDALLOC==8 sizeof(mwData)==56 mwDataSize==56
+
+
+Stopped at Wed Nov  5 22:45:27 2014
+
+
+Memory usage statistics (global):
+ N)umber of allocations made: 11091
+ L)argest memory usage      : 31742
+ T)otal of all alloc() calls: 1613422
+ U)nfreed bytes totals      : 0
